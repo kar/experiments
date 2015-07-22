@@ -1,0 +1,81 @@
+#!/usr/bin/python
+#
+# A simple wrapper around kotlinc and javac required to make buck compile Kotlin code with Android
+# dependencies (like R.java).
+#
+# Buck will invoke the compiler (this file) multiple times during the build process. This wrapper
+# accounts for it and does the following:
+#
+# - If R.java is detected in sources, everything is simply passed to 'javac'.
+# - For any other invocation, 'kotlinc' is invoked with adapted argument list:
+#   - Remove -source, -target, -sourcepath, -g
+#   - -bootclasspath is merged with -classpath
+#   - @argfiles are read, transformed into file list, and provided directly in the argument list
+#
+# Because of the fact that buck's 'src' property for 'java_library' and derived rules accepts only
+# .java files, we rename all '.kt' files so they will be passed to the compiler. Here we rename them
+# back before providing to kotlinc.
+#
+# Note that all of this was derived empirically, and might not work in general sense.
+
+import sys
+from subprocess import call
+
+# Expand @argfile into a list of filepaths to compile.
+def processArgfile(item):
+    sources = []
+    with open(item[1:]) as f:
+        for x in f.readlines():
+            x = x.strip('\n')
+            x = renameExtension(x)
+            sources.append(x)
+    return sources
+
+# Rename each .java file back to .kt (both in the filesystem and in the string).
+def renameExtension(filename):
+    call(["rename", "s/.java/.kt/", filename])
+    return filename.replace(".java", ".kt")
+
+# Compiling R.java has to be done by javac
+if any("R.java" in s for s in sys.argv):
+    exit(call(["javac"] + sys.argv[1:]))
+else:
+    params = []
+    sources = [] # Expanded source filenames from @argfile
+    cp = [] # Merged classpath arguments
+    cpNext = False # If next item will be classpath to merge
+    skipNext = False
+    for item in sys.argv[1:]:
+        if item == "-source" or item == "-target":
+            skipNext = True
+            continue
+        elif item == "-sourcepath" or item == "-g":
+            continue
+        elif item == "-bootclasspath" or item == "-classpath":
+            cpNext = True
+        elif cpNext:
+            cp.append(item)
+            cpNext = False
+            continue
+        elif skipNext:
+            skipNext = False
+            continue
+        elif item.startswith("@"):
+            sources = processArgfile(item)
+        elif not item:
+            continue
+        else:
+            params.append(item)
+
+    # Make one classpath separated by colon
+    cpAll = []
+    for i in cp:
+        cpAll += i.split(':')
+    if cpAll:
+        params.append("-classpath")
+        params.append(':'.join(cpAll))
+
+    params += sources
+
+    print str(params)
+    exit(call(["kotlinc"] + params))

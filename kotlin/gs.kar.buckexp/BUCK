@@ -1,0 +1,24 @@
+##
+# Contains app-specific Kotlin code.
+##
+android_library(
+  name = 'src',
+  srcs = [':kotlin-src'],
+  compiler = 'kotlincw',
+  deps = [
+    '//res/gs.kar.buckexp:src',
+  ],
+  visibility = [
+    '//apps/gs.kar.buckexp:',
+  ],
+)
+
+# Needed only because android_library ignores non .java files.
+genrule(
+  name = 'kotlin-src',
+  srcs = glob(['*.kt']),
+  out = 'kotlin.src.zip',
+  cmd = 'cd $SRCDIR && rename "s/.kt/.java/" *.kt && zip $OUT *.java',
+)
+
+project_config(src_target = ':src')

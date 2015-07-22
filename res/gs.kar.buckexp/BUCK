@@ -1,0 +1,16 @@
+##
+# Defines the app-specific resources.
+#
+# Note the use of common package for all resources as it simplifies merging / manifest magic.
+##
+android_resource(
+  name = 'src',
+  res = 'res',
+  package = 'gs.kar.android',
+  visibility = [
+    '//kotlin/gs.kar.buckexp:',
+    '//apps/gs.kar.buckexp:',
+  ],
+)
+
+project_config(src_target = ':res', src_roots = None)
