@@ -9,4 +9,8 @@ So far it means:
 
 # How to run it
 
-- ‘cp ~/.android/debug.keystore apps/gs.kar.buckexp/’
+- `cp ~/.android/debug.keystore apps/gs.kar.buckexp/`
+- `cd lib/kotlin && ln -s /path/to/kotlin-runtime.jar`
+- `chmod u+x kotlin/gs.kar.buckexp/kotlincw`
+- Have `kotlinc` on your $PATH
+- `make all install`
