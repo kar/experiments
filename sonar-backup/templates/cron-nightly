@@ -1,0 +1,2 @@
+# Run a backup every night at HOUR:MINUTE
+MINUTE HOUR * * * PATH/backup.sh
