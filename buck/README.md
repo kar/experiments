@@ -1,6 +1,6 @@
 # Buck experiments
 
-This repo contains (hopefully) working examples of various non-trivial buck configurations and use case scenarios.
+This repo contains examples of various non-trivial buck configurations and use case scenarios.
 
 So far it means:
 
